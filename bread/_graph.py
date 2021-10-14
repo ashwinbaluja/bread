@@ -34,7 +34,6 @@ class Graph:
         G.nodes[root]['color']=[0,1,0]
         for i in range(l):
             lookfor = self.context.record[l - i - 1].inputs
-            print(lookfor)
             found = []
             for j in range(l-i - 1, 0, -1):
                 for v in lookfor:
@@ -58,7 +57,7 @@ class Graph:
             else:
                 unsortedtiers[length] = [node]
 
-        unsortedtiers[0] = [root]
+        unsortedtiers[1] = [root]
         tiers = {} 
         maxdepth = max([x for x in unsortedtiers])
         for i in range(maxdepth + 1):
@@ -66,74 +65,82 @@ class Graph:
                 tiers[i] = unsortedtiers[i]
             else:
                 tiers[i] = []
-        #attemps to keep chains of functions ontop of eachother
 
-        print(tiers)
+        #attemps to keep chains of functions ontop of eachother iterateively adjusting
+        for _ in range(10):
+            for i in [x for x in tiers]:
+                for ind in range(len(tiers[i])):
+                    x = tiers[i][ind]
+                    if x == None:
+                        continue
 
-        for i in [x for x in tiers][:-1]:
-            for ind in range(len(tiers[i])):
-                x = tiers[i][ind]
-                if x == None:
-                    continue
-                successors = [succ for succ in G.predecessors(x)]
-                print(x, successors)
-                #print(x, [succ for succ in G.successors(x)])
-                succIndex = [tiers[i + 1].index(succ) for succ in successors if succ in tiers[i+1]]
+                    predecessors = [pred for pred in G.predecessors(x)]
 
-                sharedSuccIndex = [tiers[i].index(succ) for succ in successors if succ in tiers[i]]
+                    predIndex = [tiers[i + 1].index(pred) for pred in predecessors if pred in tiers[i+1]]
 
-                if len(sharedSuccIndex) > 0 and (sharedSuccIndex != ind + 1 or sharedSuccIndex != ind - 1):
-                    print(sharedSuccIndex, ind, x)
-
-                    if not ind + 1 >= len(tiers[i]):
-                        c = tiers[i][ind+1]
-                        tiers[i][ind+1] = tiers[i][sharedSuccIndex[0]]
-                        tiers[i][sharedSuccIndex[0]] = c
-
-                    else:
-                        c = tiers[i][ind-1]
-                        tiers[i][ind-1] = tiers[i][sharedSuccIndex[0]]
-                        tiers[i][sharedSuccIndex[0]] = c
-
-                if succIndex != ind and len(succIndex) > 0:
-                    if not ind >= len(tiers[i+1]):
-                        c = tiers[i+1][ind]
-                        tiers[i+1][ind] = tiers[i+1][succIndex[0]] 
-                        tiers[i+1][succIndex[0]] = c
-                    else:
-                        tiers[i+1] += [None] * (ind-len(tiers[i+1]) + 1)
-                        c = tiers[i+1][ind]
-                        tiers[i+1][ind] = tiers[i+1][succIndex[0]] 
-                        tiers[i+1][succIndex[0]] = c
-
-        #positions in tiers
-
-        for i in [x for x in tiers][:-1]:
-            print(i)
-            for ind in range(len(tiers[i])):
-                x = tiers[i][ind]
-                for j in range(0, i):
-                    #print(j, i)
-                    pass
+                    sharedpredIndex = [tiers[i].index(pred) for pred in predecessors if pred in tiers[i]]
+                    
+                    #print(predIndex, sharedpredIndex)
 
 
+                    if len(sharedpredIndex) > 0 and (sharedpredIndex != ind + 1 or sharedpredIndex != ind - 1):
+                        #print("triggered")
+                        if not ind + 1 >= len(tiers[i]):
+                            c = tiers[i][ind+1]
+                            tiers[i][ind+1] = tiers[i][sharedpredIndex[0]]
+                            tiers[i][sharedpredIndex[0]] = c
 
-        G.remove_nodes_from(list(nx.isolates(G)))
+                        else:
+                            c = tiers[i][ind-1]
+                            tiers[i][ind-1] = tiers[i][sharedpredIndex[0]]
+                            tiers[i][sharedpredIndex[0]] = c
+
+                    if predIndex != ind and len(predIndex) > 0:
+                        #print("triggered", len(predIndex))
+                        values = [tiers[i+1][pred] for pred in predIndex]
+
+                        if not ind >= len(tiers[i+1]):
+                            c = tiers[i+1][ind]
+                            tiers[i+1][ind] = tiers[i+1][predIndex[0]] 
+                            tiers[i+1][predIndex[0]] = c
+
+                        else:
+                            tiers[i+1] += [None] * (ind-len(tiers[i+1]) + 1)
+                            c = tiers[i+1][ind]
+                            tiers[i+1][ind] = tiers[i+1][predIndex[0]] 
+                            tiers[i+1][predIndex[0]] = c
+
+
+                    for pred in predecessors:
+                        for z in range(len(tiers)):
+                            if pred in tiers[z] and z - i > 1:
+                                #print(pred, x, "predshift")
+                                #if abs(tiers[z].index(pred)/len(tiers[z]) - ind//len(tiers[i])) < .001:
+                                if tiers[z].index(pred) == ind:
+                                    if ind == len(tiers[z]) - 1:
+                                        tiers[i].append(None)
+                                    else:
+                                        tiers[i].insert(ind, None)
+
+
+        #print(tiers)
+        #G.remove_nodes_from(list(nx.isolates(G)))
+
 
         pos = {}
         maxwidth = max([len(tiers[x]) for x in tiers])
+        #print(maxwidth)
         maxdepth = len(tiers)
         for i in tiers:
             for x in range(len(tiers[i])):
                 #x +  + ((x - len(tiers[i])) * i/len(tiers))
                 #pos[tiers[i][x]] = (maxwidth / (len(tiers[i]) + 1) + x - (len(tiers[i])/maxwidth), i)#+ (x/(i + 1)))
                 if tiers[i][x] is not None:
-                    pos[tiers[i][x]] = (x, i)
-                    #pos[tiers[i][x]] = (x, i + (x % 2 * .1))#+ (x/(i + 1)))
+                    #pos[tiers[i][x]] = (maxwidth / (len(tiers[i]) + 1) + x - (len(tiers[i])/maxwidth), i)#+ (x/(i + 1)))
+                    #pos[tiers[i][x]] = (x, i)
+                    #print(x, len(tiers[i]), maxwidth, x * maxwidth/len(tiers[i]))
+                    pos[tiers[i][x]] = (x * maxwidth/len(tiers[i]), i)# + (x % 2 * .1))#+ (x/(i + 1))) #Slightly shifts alternating columns vertically to prevent nonvertical overlaps
                     #pos[tiers[i][x]] = (x, G.nodes[tiers[i][x]]['chron'])
-
-        for i in tiers:
-            print(tiers[i])
 
         nodecolors = nx.get_node_attributes(G,'color')
         plt.rcParams["figure.figsize"] = (10,10)
@@ -147,12 +154,12 @@ class Graph:
         #pos = nx.drawing.layout.spring_layout(G, iterations=1000)
         #pos = nx.drawing.layout.kamada_kawai_layout(G)
         nx.draw_networkx_nodes(G, pos=pos, node_shape="s", node_color = nodecolorlist)
-        nx.draw_networkx_edge_labels(G, pos=pos, clip_on=False, label_pos=.4, font_size=7, edge_labels=nx.get_edge_attributes(G, "name"))
+        nx.draw_networkx_edge_labels(G, pos=pos, clip_on=True, rotate=False, label_pos=.7, font_size=7, edge_labels=nx.get_edge_attributes(G, "name"))
         nx.draw_networkx_labels(G, pos=pos, font_size=10)
-        nx.draw_networkx_edges(G, pos=pos, arrowsize=15, arrowstyle="fancy",edge_color=edgecolorlist)
+        nx.draw_networkx_edges(G, pos=pos, arrowsize=15, arrowstyle="-|>",edge_color=edgecolorlist)
 
         patches = [] 
         for i in colors:
             patches.append(mpatches.Patch(color = "#" + str(i), label=colors[i]))
         plt.legend(handles=patches)
-        plt.savefig("simple_path2.png", bbox_inches='tight', dpi=400) # save as png
+        plt.savefig("simple_path.png", bbox_inches='tight', dpi=400) # save as png

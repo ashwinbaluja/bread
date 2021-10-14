@@ -32,7 +32,8 @@ G.add_edge(b.Edge(an, cn))
 G.add_edge(b.Edge(bn, dn))
 
 G.add_edge(b.Edge(an, dn))
+G.add_edge(b.Edge(dn, en))
 
-print(G[4])
+print(G[5])
 
-print(G.get_paths_to(G[1], G[4]))
+print(max([len(x) for x in G.get_paths_to(G[1], G[5])]))
