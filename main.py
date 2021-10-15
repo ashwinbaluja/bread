@@ -21,28 +21,23 @@ def add(x, y):
 def add3(x, y, z):
     return x.v + y.v + z.v
 
-def graph():
-    print(b.ctx.record)
-    graph = b.Graph()
-    time.sleep(1)
+add(d, e, output=d) #1 
 
-add(d, e, output=d)
+add_1(d, output=d) #1
 
-add_1(d, output=d)
+add(d, f, output=f) #2
 
-add(d, f, output=f)
+add_1(d, output=d) #2 
 
-add_1(d, output=d)
+add_1(f, output=f) #3
 
-add_1(f, output=f)
+add(d, f, output=f) #3
 
-add(d, f, output=f)
+add3(f, e, d, output=f) #1
 
-add3(f, e, d, output=f)
+add3(f, c, e, output=e) #2
 
-add3(f, c, e, output=e)
-
-add_1(e, output=e)
+add_1(e, output=e) #4 
 
 
 graph = b.Graph()
